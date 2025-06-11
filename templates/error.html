@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card bg-light">
+            <div class="card-header bg-danger text-white">
+                <h5>Error Occurred</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    {{ error }}
+                </div>
+                <div class="mt-3">
+                    <a href="/" class="btn btn-primary">Return to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

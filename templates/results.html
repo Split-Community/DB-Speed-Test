@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card query-card mb-4">
+            <div class="card-header bg-dark text-white">
+                <h5>Current Query</h5>
+            </div>
+            <div class="card-body">
+                <pre>{{ query }}</pre>
+                <div class="mt-3 d-flex gap-2">
+                    <a href="/" class="btn btn-primary">Run New Query</a>
+                    <button id="startAutoRefresh" class="btn btn-success" onclick="startAutoRefresh(); return false;">Start Auto-Refresh</button>
+                    <button id="stopAutoRefresh" class="btn btn-danger" disabled onclick="stopAutoRefresh(); return false;">Stop Auto-Refresh</button>
+                    <span id="refreshStatus" class="ms-2 align-self-center badge bg-warning text-dark" style="display: none;">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        <span class="ms-1">Auto-refreshing in <span id="countdown">1</span>s</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="card {{ db_choice }}-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5>
+                    <span class="db-badge {{ db_choice }}-badge">{{ db_choice|upper }}</span>
+                    Query Results
+                </h5>
+                <div class="execution-time">
+                    {{ execution_time|round(4) }} seconds
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                {% for column in column_names %}
+                                <th scope="col">{{ column }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in results %}
+                            <tr>
+                                {% for cell in row %}
+                                <td>{{ cell }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if not results %}
+                <div class="alert alert-info">
+                    No results returned for this query.
+                </div>
+                {% endif %}
+                
+                <div class="mt-3">
+                    <p class="text-muted">User ID: {{ user_id }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5>Sample Queries</h5>
+            </div>
+            <div class="card-body">
+                {% for sample_query in sample_queries %}
+                <div class="query-sample" data-query="{{ sample_query }}">
+                    <pre class="m-0 small">{{ sample_query }}</pre>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-dark text-white">
+                <h5>Execution History</h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-sm history-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Database</th>
+                            <th>Query</th>
+                            <th>Time (s)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in history|reverse %}
+                        <tr class="{{ item.database }}">
+                            <td>{{ item.timestamp }}</td>
+                            <td>{{ item.database|upper }}</td>
+                            <td><code class="small">{{ item.query[:30] }}{% if item.query|length > 30 %}...{% endif %}</code></td>
+                            <td>{{ item.execution_time|round(4) }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

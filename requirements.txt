@@ -1,0 +1,9 @@
+flask==2.3.3
+psycopg2-binary==2.9.10
+mysql-connector-python==8.0.32
+pandas==2.3.0
+splitio_client==10.2.0
+gunicorn==21.2.0
+python-dotenv==1.0.0
+selenium==4.11.0
+webdriver-manager==4.0.0
