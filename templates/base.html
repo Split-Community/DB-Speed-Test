@@ -121,12 +121,46 @@
             });
         });
         
-        // Very simple auto-refresh system
-        let autoRefreshTimer = null;
+        // Persistent auto-refresh system using localStorage
+        const AUTO_REFRESH_KEY = 'dbComparisonAutoRefresh';
         const refreshTime = 1000; // 1 second
+        let autoRefreshTimer = null;
+        let countdownTimer = null;
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Checking for auto-refresh state on page load');
+            // Check if auto-refresh was active
+            if (localStorage.getItem(AUTO_REFRESH_KEY) === 'active') {
+                console.log('Auto-refresh was active, restarting');
+                // Wait a moment to ensure page is fully loaded before starting refresh
+                setTimeout(function() {
+                    // Use direct DOM manipulation to ensure UI is updated
+                    const startBtn = document.getElementById('startAutoRefresh');
+                    if (startBtn) {
+                        console.log('Clicking start button programmatically');
+                        startAutoRefresh();
+                    }
+                }, 500);
+            }
+        });
         
         function startAutoRefresh() {
             console.log('Starting auto-refresh');
+            
+            // Save state to localStorage immediately
+            localStorage.setItem(AUTO_REFRESH_KEY, 'active');
+            
+            // Store current query if any
+            const urlParams = new URLSearchParams(window.location.search);
+            const currentQuery = urlParams.get('query');
+            if (currentQuery) {
+                localStorage.setItem(AUTO_REFRESH_KEY + '_query', currentQuery);
+            } else {
+                localStorage.removeItem(AUTO_REFRESH_KEY + '_query');
+            }
+            
+            // Update UI
             const startBtn = document.getElementById('startAutoRefresh');
             const stopBtn = document.getElementById('stopAutoRefresh');
             const status = document.getElementById('refreshStatus');
@@ -135,43 +169,50 @@
             if (stopBtn) stopBtn.disabled = false;
             if (status) status.style.display = 'inline-block';
             
-            // Start the refresh timer
-            if (!autoRefreshTimer) {
-                const countdown = document.getElementById('countdown');
-                let seconds = 1;
-                
-                // Update countdown
+            // Clear any existing timers first
+            clearAllTimers();
+            
+            // Start the countdown timer
+            const countdown = document.getElementById('countdown');
+            let seconds = 1;
+            
+            // Update countdown display
+            if (countdown) countdown.textContent = seconds;
+            
+            // Create countdown effect
+            countdownTimer = setInterval(function() {
+                seconds -= 1;
                 if (countdown) countdown.textContent = seconds;
                 
-                // Create countdown effect
-                const countdownTimer = setInterval(function() {
-                    seconds -= 1;
+                if (seconds <= 0) {
+                    seconds = 1;
                     if (countdown) countdown.textContent = seconds;
-                    
-                    if (seconds <= 0) {
-                        seconds = 1;
-                        if (countdown) countdown.textContent = seconds;
-                    }
-                }, 1000);
-                
-                // Create page refresh timer
-                autoRefreshTimer = setInterval(function() {
-                    console.log('Auto-refreshing now...');
+                }
+            }, 1000);
+            
+            // Create page refresh timer
+            autoRefreshTimer = setInterval(function() {
+                console.log('Auto-refreshing now...');
+                // Get the current URL including any query parameters
+                const savedQuery = localStorage.getItem(AUTO_REFRESH_KEY + '_query');
+                if (savedQuery) {
+                    window.location.href = '/?query=' + encodeURIComponent(savedQuery);
+                } else {
                     window.location.reload();
-                }, refreshTime);
-                
-                // Store both timers
-                window._refreshTimers = {
-                    refresh: autoRefreshTimer,
-                    countdown: countdownTimer
-                };
-            }
+                }
+            }, refreshTime);
             
             return false;
         }
         
         function stopAutoRefresh() {
             console.log('Stopping auto-refresh');
+            
+            // Remove from localStorage immediately
+            localStorage.removeItem(AUTO_REFRESH_KEY);
+            localStorage.removeItem(AUTO_REFRESH_KEY + '_query');
+            
+            // Update UI
             const startBtn = document.getElementById('startAutoRefresh');
             const stopBtn = document.getElementById('stopAutoRefresh');
             const status = document.getElementById('refreshStatus');
@@ -180,15 +221,22 @@
             if (stopBtn) stopBtn.disabled = true;
             if (status) status.style.display = 'none';
             
-            // Clear all timers
-            if (window._refreshTimers) {
-                clearInterval(window._refreshTimers.refresh);
-                clearInterval(window._refreshTimers.countdown);
-                window._refreshTimers = null;
-                autoRefreshTimer = null;
-            }
+            // Clear timers
+            clearAllTimers();
             
             return false;
+        }
+        
+        function clearAllTimers() {
+            // Clear any existing timers
+            if (autoRefreshTimer) {
+                clearInterval(autoRefreshTimer);
+                autoRefreshTimer = null;
+            }
+            if (countdownTimer) {
+                clearInterval(countdownTimer);
+                countdownTimer = null;
+            }
         }
     </script>
 </body>
